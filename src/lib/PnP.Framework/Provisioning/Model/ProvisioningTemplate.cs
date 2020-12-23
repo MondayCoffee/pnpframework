@@ -844,7 +844,7 @@ namespace PnP.Framework.Provisioning.Model
             }
 
             return (
-                this.ComposedLook.Equals(other.ComposedLook) &&
+                ((this.ComposedLook!=null) ?this.ComposedLook.Equals(other.ComposedLook): other.ComposedLook==null) &&
                 this.ContentTypes.DeepEquals(other.ContentTypes) &&
                 this.CustomActions.SiteCustomActions.DeepEquals(other.CustomActions.SiteCustomActions) &&
                 this.CustomActions.WebCustomActions.DeepEquals(other.CustomActions.WebCustomActions) &&
