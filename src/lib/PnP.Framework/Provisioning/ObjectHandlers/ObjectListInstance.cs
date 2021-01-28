@@ -2694,6 +2694,9 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                             Required = field.Required,
                             Hidden = field.Hidden,
                         });
+
+                        //SharePoint Online creates the Note-Field to Taxonomie-Field automatic - no need to add again
+                        /*
                         if (field.TypeAsString.StartsWith("TaxonomyField"))
                         {
                             // find the corresponding taxonomy field and include it anyway
@@ -2716,7 +2719,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                                 Required = noteField.Required,
                                 Hidden = noteField.Hidden
                             });
-                        }
+                        } */
                     }
                 }
                 else
@@ -2783,7 +2786,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         }
                         list.Fields.Add(new Model.Field { SchemaXml = ParseFieldSchema(fieldSchema, web, lists) });
                     }
-
+                    //SharePoint Online creates the Note-Field to Taxonomie-Field automatic - no need to add again
+                    /*
                     if (field.TypeAsString.StartsWith("TaxonomyField"))
                     {
                         // find the corresponding taxonomy container text field and include it too
@@ -2796,7 +2800,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         var noteSchemaXml = XElement.Parse(noteField.SchemaXml);
                         noteSchemaXml.Attribute("SourceID")?.Remove();
                         list.Fields.Insert(0, new Model.Field { SchemaXml = ParseFieldSchema(noteSchemaXml.ToString(), web, lists) });
-                    }
+                    }*/
                 }
             }
             return list;

@@ -757,7 +757,21 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         fl => fl.ShowInDisplayForm))
                 );
 
+            var fields = web.Fields;
+            web.Context.Load(fields, fld => fld.Include(f => f.TypeAsString, f => f.Id, f => f.SchemaXml));
             web.Context.ExecuteQueryRetry();
+
+            List<Guid> IngnoreNoteFields = new List<Guid>();
+            foreach (var spField in fields.Where(f => f.TypeAsString.StartsWith("TaxonomyField")))
+            {
+                var element = XElement.Parse(spField.SchemaXml);
+                var xObject = ((IEnumerable<Object>)element.XPathEvaluate("/Customization/ArrayOfProperty/Property[Name='TextField']/Value")).FirstOrDefault();
+                Guid noteFieldId = Guid.Empty;
+                if (Guid.TryParse(((XElement)xObject).Value.ToString(), out noteFieldId))
+                {
+                    IngnoreNoteFields.Add(noteFieldId);
+                }
+            }
 
             if (cts.Count > 0 && web.IsSubSite())
             {
@@ -846,6 +860,9 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         EditFormUrl = ct.EditFormUrl,
                         NewFormUrl = ct.NewFormUrl,
                     };
+
+                    //remove if FieldRef point to Note Filed belonging to TaxonomieField
+                    newCT.FieldRefs.RemoveAll(f => IngnoreNoteFields.Contains(f.Id));
 
                     if (creationInfo.PersistMultiLanguageResources)
                     {

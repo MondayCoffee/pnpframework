@@ -560,6 +560,13 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                             web.Context.ExecuteQueryRetry();
                             taxTextFieldsToMoveUp.Add(taxField.TextField);
 
+                            //SharePoint Online creates the Note-Field to Taxonomie-Field automatic
+                            var xObject = ((IEnumerable<Object>)element.XPathEvaluate("/Customization/ArrayOfProperty/Property[Name='TextField']")).FirstOrDefault();
+                            if (xObject is XElement)
+                            {
+                                ((XElement)xObject).Remove();
+                            }
+
                             fieldXml = TokenizeTaxonomyField(web, element);
                         }
 
@@ -617,7 +624,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 {
                     var field = template.SiteFields.First(f => Guid.Parse(f.SchemaXml.ElementAttributeValue("ID")).Equals(textFieldId));
                     template.SiteFields.RemoveAll(f => Guid.Parse(f.SchemaXml.ElementAttributeValue("ID")).Equals(textFieldId));
-                    template.SiteFields.Insert(0, field);
+                    //SharePoint Online creates the Note-Field to Taxonomie-Field automatic - no need to add again
+                    //template.SiteFields.Insert(0, field);
                 }
                 // move calculated fields to the bottom of the list
                 // this will not be sufficient in the case of a calculated field is referencing another calculated field
