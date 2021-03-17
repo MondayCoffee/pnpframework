@@ -908,7 +908,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             // Publish page, page templates cannot be published
             if (clientSidePage.Publish && !clientSidePage.PromoteAsTemplate)
             {
-                page.Publish();
+                fileAfterSave.PublishFileToLevel(Microsoft.SharePoint.Client.FileLevel.Published);
+                //page.Publish(); // PnP.Core does currently not check if Checkin / Approve is needed and if minor versions are enabled and so on.
             }
 
             // Set any security on the page
