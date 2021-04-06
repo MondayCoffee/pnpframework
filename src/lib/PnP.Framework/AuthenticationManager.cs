@@ -612,6 +612,28 @@ namespace PnP.Framework
 
 
         /// <summary>
+        /// Returns OnBehalfToken for AzureADCertificate with impersonation token from UserAssertion
+        /// </summary>
+        /// <param name="scopes"></param>
+        /// <param name="userAssertion"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<string> GetAccessTokenAsync(string[] scopes, UserAssertion userAssertion, CancellationToken cancellationToken)
+        {
+            AuthenticationResult authResult = null;
+            if (authenticationType == ClientContextType.AzureADCertificate)
+            {
+                authResult= await confidentialClientApplication.AcquireTokenOnBehalfOf(scopes, userAssertion).ExecuteAsync(cancellationToken); 
+            }
+            if(authResult!=null)
+            {
+                return authResult.AccessToken;
+            }
+            return null;
+        }
+
+
+        /// <summary>
         /// Returns an access token for the given scopes.
         /// </summary>
         /// <param name="scopes">The scopes to retrieve the access token for</param>
