@@ -623,7 +623,9 @@ namespace PnP.Framework
             AuthenticationResult authResult = null;
             if (authenticationType == ClientContextType.AzureADCertificate)
             {
-                authResult= await confidentialClientApplication.AcquireTokenOnBehalfOf(scopes, userAssertion).ExecuteAsync(cancellationToken); 
+                //need to create separate instance of ConfidentialClientApplicationBuilder because otherwise token in cache gets replaced
+                var userAuthManager = ConfidentialClientApplicationBuilder.Create(confidentialClientApplication.AppConfig.ClientId).WithCertificate(confidentialClientApplication.AppConfig.ClientCredentialCertificate).WithTenantId(confidentialClientApplication.AppConfig.TenantId).Build();
+                authResult = await userAuthManager.AcquireTokenOnBehalfOf(scopes, userAssertion).ExecuteAsync(cancellationToken);
             }
             if(authResult!=null)
             {
