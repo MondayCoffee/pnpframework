@@ -26,6 +26,16 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 };
                 switch (web.HeaderLayout)
                 {
+                    case HeaderLayoutType.Extended:
+                        {
+                            header.Layout = SiteHeaderLayout.Extended;
+                            break;
+                        }
+                    case HeaderLayoutType.Minimal:
+                        {
+                            header.Layout = SiteHeaderLayout.Minimal;
+                            break;
+                        }
                     case HeaderLayoutType.Compact:
                         {
                             header.Layout = SiteHeaderLayout.Compact;
@@ -67,6 +77,16 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         case SiteHeaderLayout.Standard:
                             {
                                 web.HeaderLayout = HeaderLayoutType.Standard;
+                                break;
+                            }
+                        case SiteHeaderLayout.Minimal:
+                            {
+                                web.HeaderLayout = HeaderLayoutType.Minimal;
+                                break;
+                            }
+                        case SiteHeaderLayout.Extended:
+                            {
+                                web.HeaderLayout = HeaderLayoutType.Extended;
                                 break;
                             }
                     }
