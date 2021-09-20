@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using PnP.Core.Services;
 using PnP.Framework.Diagnostics;
 using PnP.Framework.Provisioning.Model;
+using PnP.Framework.Provisioning.Model.SharePoint.ModernExperiences;
 using PnP.Framework.Provisioning.ObjectHandlers.Extensions;
 using PnP.Framework.Provisioning.ObjectHandlers.TokenDefinitions;
 using PnP.Framework.Provisioning.ObjectHandlers.Utilities;
@@ -417,6 +418,12 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 page.ThumbnailUrl = parser.ParseString(clientSidePage.ThumbnailUrl);
             }
 
+            Dictionary<int, SectionZoneGroupMetadata> sectionZoneGroupMetadata = new Dictionary<int, SectionZoneGroupMetadata>();
+            if (clientSidePage.Properties.ContainsKey("SectionZoneGroupMetadata"))
+            {
+                sectionZoneGroupMetadata= JsonConvert.DeserializeObject<Dictionary<int, SectionZoneGroupMetadata>>(clientSidePage.Properties["SectionZoneGroupMetadata"], new JsonSerializerSettings() { MissingMemberHandling = MissingMemberHandling.Ignore });
+            }
+
             // Add content on the page, not needed for repost pages
             if (page.LayoutType != PnPCore.PageLayoutType.RepostPage)
             {
@@ -479,6 +486,27 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                             page.AddSection(PnPCore.CanvasSectionTemplate.OneColumn, section.Order, (int)section.BackgroundEmphasis);
                             break;
                     }
+
+                    if(sectionZoneGroupMetadata.ContainsKey((int)section.Order))
+                    {
+                        page.Sections[sectionCount].Collapsible = sectionZoneGroupMetadata[(int)section.Order].Collapsible;
+                        page.Sections[sectionCount].IsExpanded = sectionZoneGroupMetadata[(int)section.Order].IsExpanded;
+
+                        if (!string.IsNullOrWhiteSpace(sectionZoneGroupMetadata[(int)section.Order].IconAlignment))
+                        {
+                            if (sectionZoneGroupMetadata[(int)section.Order].IconAlignment.Equals("left",StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                page.Sections[sectionCount].IconAlignment = PnPCore.IconAlignment.Left;
+                            }
+                            else
+                            {
+                                page.Sections[sectionCount].IconAlignment = PnPCore.IconAlignment.Right;
+                            }
+                        }
+                        page.Sections[sectionCount].DisplayName = sectionZoneGroupMetadata[(int)section.Order].DisplayName;
+                        page.Sections[sectionCount].ShowDividerLine = sectionZoneGroupMetadata[(int)section.Order].ShowDividerLine;
+                    }
+
 
                     // Add controls to the section
                     if (section.Controls.Any())

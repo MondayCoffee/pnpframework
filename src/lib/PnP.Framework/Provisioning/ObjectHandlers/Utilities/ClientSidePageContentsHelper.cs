@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using PnP.Framework.Diagnostics;
 using PnP.Framework.Provisioning.Connectors;
 using PnP.Framework.Provisioning.Model;
+using PnP.Framework.Provisioning.Model.SharePoint.ModernExperiences;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -191,6 +192,11 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                         {
                             Order = section.Order,
                             BackgroundEmphasis = (Emphasis)section.ZoneEmphasis,
+                            Collapsible = section.Collapsible,
+                            IsExpanded = section.IsExpanded,
+                            DisplayName = section.DisplayName,
+                            IconAlignment = section.IconAlignment,
+                            ShowDividerLine = section.ShowDividerLine
                         };
                         if (section.VerticalSectionColumn != null)
                         {
@@ -430,12 +436,29 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
 
                     // Renumber the sections...when editing modern homepages you can end up with section with order 0.5 or 0.75...let's ensure we render section as of 1
                     int sectionOrder = 1;
+                    Dictionary<int, SectionZoneGroupMetadata> sectionZoneGroupMetadata = new Dictionary<int, SectionZoneGroupMetadata>();
                     foreach (var sectionInstance in extractedPageInstance.Sections)
                     {
                         sectionInstance.Order = sectionOrder;
+                        sectionZoneGroupMetadata.Add(sectionOrder, new SectionZoneGroupMetadata()
+                        {
+                            Collapsible= sectionInstance.Collapsible,
+                            IsExpanded = sectionInstance.IsExpanded,
+                            IconAlignment = sectionInstance.IconAlignment.HasValue?sectionInstance.IconAlignment.ToString():null,
+                            DisplayName = sectionInstance.DisplayName,
+                            ShowDividerLine = sectionInstance.ShowDividerLine
+                        });
+
                         sectionOrder++;
                     }
-
+                    if (extractedPageInstance.Properties.ContainsKey("SectionZoneGroupMetadata"))
+                    {
+                        extractedPageInstance.Properties["SectionZoneGroupMetadata"]=JsonConvert.SerializeObject(sectionZoneGroupMetadata, Formatting.None);
+                    }
+                    else
+                    {
+                        extractedPageInstance.Properties.Add("SectionZoneGroupMetadata", JsonConvert.SerializeObject(sectionZoneGroupMetadata, Formatting.None));
+                    }
                     // Spaces support
                     if (pageToExtract.LayoutType == PnPCore.PageLayoutType.Spaces && !string.IsNullOrEmpty(pageToExtract.SpaceContent))
                     {
