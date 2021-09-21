@@ -422,6 +422,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             if (clientSidePage.Properties.ContainsKey("SectionZoneGroupMetadata"))
             {
                 sectionZoneGroupMetadata= JsonConvert.DeserializeObject<Dictionary<int, SectionZoneGroupMetadata>>(clientSidePage.Properties["SectionZoneGroupMetadata"], new JsonSerializerSettings() { MissingMemberHandling = MissingMemberHandling.Ignore });
+                clientSidePage.Properties.Remove("SectionZoneGroupMetadata");//since we dont want this info endup on the file properties
             }
 
             // Add content on the page, not needed for repost pages

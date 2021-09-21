@@ -94,12 +94,17 @@ namespace PnP.Framework.Provisioning.Model
         /// <returns>Returns HashCode</returns>
         public override int GetHashCode()
         {
-            return (String.Format("{0}|{1}|{2}|{3}|{4}|",
+            return (String.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|",
                 this.Controls.Aggregate(0, (acc, next) => acc += (next != null ? next.GetHashCode() : 0)),
                 Order.GetHashCode(),
                 Type.GetHashCode(),
                 BackgroundEmphasis.GetHashCode(),
-                VerticalSectionEmphasis.GetHashCode()
+                VerticalSectionEmphasis.GetHashCode(),
+                Collapsible.GetHashCode(), 
+                IsExpanded.GetHashCode(), 
+                DisplayName?.GetHashCode() ?? 0, 
+                IconAlignment.HasValue?IconAlignment.Value.GetHashCode():0, 
+                ShowDividerLine.GetHashCode()
             ).GetHashCode());
         }
 
@@ -133,7 +138,12 @@ namespace PnP.Framework.Provisioning.Model
                 this.Order == other.Order &&
                 this.Type == other.Type &&
                 this.BackgroundEmphasis == other.BackgroundEmphasis &&
-                this.VerticalSectionEmphasis == other.VerticalSectionEmphasis
+                this.VerticalSectionEmphasis == other.VerticalSectionEmphasis &&
+                this.Collapsible == other.Collapsible &&
+                this.IsExpanded == other.IsExpanded &&
+                this.DisplayName == other.DisplayName &&
+                this.IconAlignment == other.IconAlignment &&
+                this.ShowDividerLine == other.ShowDividerLine
                 );
         }
 
