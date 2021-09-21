@@ -72,6 +72,10 @@ namespace PnP.Framework.Provisioning.Model
         /// </summary>
         public bool ShowDividerLine { get; set; }
 
+        /// <summary>
+        /// Type of this section, not configurable by SDK users
+        /// </summary>
+        public int SectionType { get; set; }
         #endregion
 
         #region Constructors
@@ -94,7 +98,7 @@ namespace PnP.Framework.Provisioning.Model
         /// <returns>Returns HashCode</returns>
         public override int GetHashCode()
         {
-            return (String.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|",
+            return (String.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|",
                 this.Controls.Aggregate(0, (acc, next) => acc += (next != null ? next.GetHashCode() : 0)),
                 Order.GetHashCode(),
                 Type.GetHashCode(),
@@ -104,7 +108,8 @@ namespace PnP.Framework.Provisioning.Model
                 IsExpanded.GetHashCode(), 
                 DisplayName?.GetHashCode() ?? 0, 
                 IconAlignment.HasValue?IconAlignment.Value.GetHashCode():0, 
-                ShowDividerLine.GetHashCode()
+                ShowDividerLine.GetHashCode(), 
+                SectionType.GetHashCode()
             ).GetHashCode());
         }
 
@@ -143,7 +148,8 @@ namespace PnP.Framework.Provisioning.Model
                 this.IsExpanded == other.IsExpanded &&
                 this.DisplayName == other.DisplayName &&
                 this.IconAlignment == other.IconAlignment &&
-                this.ShowDividerLine == other.ShowDividerLine
+                this.ShowDividerLine == other.ShowDividerLine &&
+                this.SectionType == other.SectionType
                 );
         }
 
