@@ -557,7 +557,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         var isDirty = false;
                         var originalFieldElement = XElement.Parse(siteField.SchemaXml);
                         var nameAttributeValue = originalFieldElement.Attribute("DisplayName") != null ? originalFieldElement.Attribute("DisplayName").Value : "";
-                        if (nameAttributeValue.ContainsResourceToken())
+                        if (nameAttributeValue.ContainsResourceToken() && !fieldRef.DisplayName.ContainsResourceToken())
                         {
                             if (field.TitleResource.SetUserResourceValue(nameAttributeValue, parser))
                             {
@@ -924,6 +924,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             {
                 if (fieldRef.DisplayName.ContainsResourceToken())
                 {
+                    listField.Title = parser.ParseString(fieldRef.DisplayName);
                     listField.TitleResource.SetUserResourceValue(fieldRef.DisplayName, parser);
                 }
                 else
@@ -1022,6 +1023,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             {
                 if (fieldRef.DisplayName.ContainsResourceToken())
                 {
+                    createdField.Title = parser.ParseString(fieldRef.DisplayName);
                     createdField.TitleResource.SetUserResourceValue(fieldRef.DisplayName, parser);
                 }
                 else
@@ -2678,13 +2680,13 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 var siteContext = web.Context.GetSiteCollectionContext();
                 var rootWeb = siteContext.Site.RootWeb;
                 siteColumns = rootWeb.Fields;
-                siteContext.Load(siteColumns, scs => scs.Include(sc => sc.Id, sc => sc.DefaultValue, sc => sc.PinnedToFiltersPane, sc => sc.ShowInFiltersPane, sc => sc.CustomFormatter));
+                siteContext.Load(siteColumns, scs => scs.Include(sc => sc.Id, sc => sc.Title, sc => sc.DefaultValue, sc => sc.PinnedToFiltersPane, sc => sc.ShowInFiltersPane, sc => sc.CustomFormatter));
                 siteContext.ExecuteQueryRetry();
             }
             else
             {
                 siteColumns = web.Fields;
-                web.Context.Load(siteColumns, scs => scs.Include(sc => sc.Id, sc => sc.DefaultValue, sc => sc.PinnedToFiltersPane, sc => sc.ShowInFiltersPane, sc => sc.CustomFormatter));
+                web.Context.Load(siteColumns, scs => scs.Include(sc => sc.Id, sc => sc.Title, sc => sc.DefaultValue, sc => sc.PinnedToFiltersPane, sc => sc.ShowInFiltersPane, sc => sc.CustomFormatter));
                 web.Context.ExecuteQueryRetry();
             }
 
@@ -2774,13 +2776,40 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
                     if (addField)
                     {
-                        list.FieldRefs.Add(new FieldRef(field.InternalName)
+                        FieldRef currentFieldRef = null;
+                        //when title or description in main language differs and we should Persist Translations
+                        if (creationInfo.PersistMultiLanguageResources && 
+                            (string.IsNullOrWhiteSpace(siteColumn.Title) != string.IsNullOrWhiteSpace(field.Title) 
+                            || (!string.IsNullOrWhiteSpace(siteColumn.Title) && !string.IsNullOrWhiteSpace(field.Title) && !siteColumn.Title.Equals(field.Title)))
+                            )
                         {
-                            Id = field.Id,
-                            DisplayName = field.Title,
-                            Required = field.Required,
-                            Hidden = field.Hidden,
-                        });
+                            var escapedFieldTitle = field.Title.Replace(" ", "_");
+                            if (UserResourceExtensions.PersistResourceValue(field.TitleResource, $"Field_{escapedFieldTitle}_DisplayName", template, creationInfo))
+                            {
+                                var fieldTitle = $"{{res:Field_{escapedFieldTitle}_DisplayName}}";
+                                fieldElement.SetAttributeValue("DisplayName", fieldTitle);
+
+                                currentFieldRef=new FieldRef(field.InternalName)
+                                {
+                                    Id = field.Id,
+                                    DisplayName = fieldTitle,
+                                    Required = field.Required,
+                                    Hidden = field.Hidden,
+                                };
+                            }
+                        }
+                        if(currentFieldRef == null)
+                        {
+                            currentFieldRef = new FieldRef(field.InternalName)
+                            {
+                                Id = field.Id,
+                                DisplayName = field.Title,
+                                Required = field.Required,
+                                Hidden = field.Hidden,
+                            };
+                        }
+                        list.FieldRefs.Add(currentFieldRef);
+
                         if (field.TypeAsString.StartsWith("TaxonomyField"))
                         {
                             // find the corresponding taxonomy field and include it anyway
