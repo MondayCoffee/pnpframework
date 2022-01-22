@@ -67,10 +67,10 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
                 var existingFields = web.Fields;
 
-                web.Context.Load(existingFields, fs => fs.Include(f => f.Id));
+                web.Context.Load(existingFields, fs => fs.Include(f => f.Id, f => f.InternalName, f => f.TypeAsString));
                 web.Context.ExecuteQueryRetry();
                 var existingFieldIds = existingFields.AsEnumerable<SPField>().Select(l => l.Id).ToList();
-
+                var existingFieldInternalNames = existingFields.AsEnumerable<SPField>().Select(l => l.InternalName).ToList();
                 SortedList<string, Field> fieldDict = new SortedList<string, Field>(new DuplicateKeyComparer<string>());
                 foreach (Field siteField in template.SiteFields)
                 {
@@ -92,7 +92,17 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     var fieldSchemaElement = XElement.Parse(parser.ParseXmlString(field.SchemaXml));
                     var fieldId = fieldSchemaElement.Attribute("ID").Value;
                     var fieldInternalName = fieldSchemaElement.Attribute("InternalName")?.Value ?? fieldSchemaElement.Attribute("Name")?.Value;
+                    var fieldType = fieldSchemaElement.Attribute("Type").Value;
                     WriteSubProgress("Field", !string.IsNullOrWhiteSpace(fieldInternalName) ? fieldInternalName : fieldId, currentFieldIndex, fields.Count);
+                    if(!existingFieldIds.Contains(Guid.Parse(fieldId)) && existingFieldInternalNames.Contains(fieldInternalName))
+                    {
+                        //if we have a match on internalName and FieldType let's assume it's same field we want to update
+                        var existingField = existingFields.AsEnumerable<SPField>().First(f => f.StaticName == fieldInternalName);
+                        if(existingField.TypeAsString == fieldType)
+                        {
+                            fieldId = existingField.Id.ToString();
+                        }
+                    }
                     if (!existingFieldIds.Contains(Guid.Parse(fieldId)))
                     {
                         try
