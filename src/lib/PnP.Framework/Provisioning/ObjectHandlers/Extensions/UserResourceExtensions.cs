@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Resources;
+//using System.Resources;
 using System.Resources.NetStandard;
 using System.Text.RegularExpressions;
 
@@ -29,8 +29,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Extensions
                 if (System.IO.File.Exists(resourceFileName))
                 {
                     // Read existing entries, if any
-                    using (ResourceReader resxReader = new ResourceReader(resourceFileName))
-                    //using (ResXResourceReader resxReader = new ResXResourceReader(resourceFileName))
+                    //using (ResourceReader resxReader = new ResourceReader(resourceFileName)) does not work anymore
+                    using (ResXResourceReader resxReader = new ResXResourceReader(resourceFileName))
                     {
                         foreach (DictionaryEntry entry in resxReader)
                         {
