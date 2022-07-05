@@ -2712,7 +2712,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     if (siteColumn.PinnedToFiltersPane != field.PinnedToFiltersPane
                         || siteColumn.ShowInFiltersPane != field.ShowInFiltersPane
                         || string.IsNullOrWhiteSpace(siteColumn.CustomFormatter) != string.IsNullOrWhiteSpace(field.CustomFormatter)
-                        || !string.IsNullOrWhiteSpace(siteColumn.CustomFormatter) && !string.IsNullOrWhiteSpace(field.CustomFormatter) && !siteColumn.CustomFormatter.Equals(field.CustomFormatter))
+                        || !string.IsNullOrWhiteSpace(siteColumn.CustomFormatter) && !string.IsNullOrWhiteSpace(field.CustomFormatter) && !siteColumn.CustomFormatter.Equals(field.CustomFormatter)
+                        || siteColumn.Title != field.Title)
                     {
                         includeAsListField = true;
                     }
