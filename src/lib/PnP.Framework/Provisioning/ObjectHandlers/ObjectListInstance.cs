@@ -353,7 +353,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             }
 
             var existingViews = createdList.Views;
-            web.Context.Load(existingViews, vs => vs.Include(v => v.Title, v => v.Id));
+            web.Context.Load(existingViews, vs => vs.Include(v => v.Title, v => v.Id, v => v.ServerRelativeUrl));
             web.Context.ExecuteQueryRetry();
             var currentViewIndex = 0;
             foreach (var view in list.Views)
@@ -663,6 +663,18 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 {
                     existingView.DeleteObject();
                     web.Context.ExecuteQueryRetry();
+                }
+
+                var viewUrlString = viewElement.Attribute("Url") != null ? viewElement.Attribute("Url").Value : "";
+                if (!string.IsNullOrWhiteSpace(viewUrlString))
+                {
+                    viewUrlString = parser.ParseString(viewUrlString);
+                    var existingView1 = existingViews.FirstOrDefault(v => v.ServerRelativeUrl == viewUrlString);
+                    if (existingView1 != null)
+                    {
+                        existingView1.DeleteObject();
+                        web.Context.ExecuteQueryRetry();
+                    }
                 }
 
                 // Type
