@@ -669,7 +669,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     var viewUrlString = viewElement.Attribute("Url") != null ? viewElement.Attribute("Url").Value : "";
                     if (!string.IsNullOrWhiteSpace(viewUrlString))
                     {
-                        var existingView1 = existingViews.FirstOrDefault(v => v.IsObjectPropertyInstantiated("ServerRelativeUrl") && v.ServerRelativeUrl == viewUrlString);
+                        var existingView1 = existingViews.FirstOrDefault(v => v.IsPropertyAvailable("ServerRelativeUrl") && viewUrlString.Equals(v.ServerRelativeUrl,StringComparison.InvariantCultureIgnoreCase));
                         if (existingView1 != null)
                         {
                             existingView1.DeleteObject();
