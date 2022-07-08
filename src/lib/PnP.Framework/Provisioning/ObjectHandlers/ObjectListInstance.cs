@@ -664,16 +664,17 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     existingView.DeleteObject();
                     web.Context.ExecuteQueryRetry();
                 }
-
-                var viewUrlString = viewElement.Attribute("Url") != null ? viewElement.Attribute("Url").Value : "";
-                if (!string.IsNullOrWhiteSpace(viewUrlString))
+                else
                 {
-                    viewUrlString = parser.ParseString(viewUrlString);
-                    var existingView1 = existingViews.FirstOrDefault(v => v.ServerRelativeUrl == viewUrlString);
-                    if (existingView1 != null)
+                    var viewUrlString = viewElement.Attribute("Url") != null ? viewElement.Attribute("Url").Value : "";
+                    if (!string.IsNullOrWhiteSpace(viewUrlString))
                     {
-                        existingView1.DeleteObject();
-                        web.Context.ExecuteQueryRetry();
+                        var existingView1 = existingViews.FirstOrDefault(v => v.IsObjectPropertyInstantiated("ServerRelativeUrl") && v.ServerRelativeUrl == viewUrlString);
+                        if (existingView1 != null)
+                        {
+                            existingView1.DeleteObject();
+                            web.Context.ExecuteQueryRetry();
+                        }
                     }
                 }
 
