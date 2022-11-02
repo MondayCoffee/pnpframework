@@ -1,7 +1,6 @@
 using Microsoft.SharePoint.Client;
 using Microsoft.SharePoint.Client.Taxonomy;
 using PnP.Framework.Attributes;
-using System.Linq;
 
 namespace PnP.Framework.Provisioning.ObjectHandlers.TokenDefinitions
 {
@@ -21,13 +20,10 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.TokenDefinitions
         {
             if (CacheValue == null)
             {
-                TaxonomySession taxSession = TaxonomySession.GetTaxonomySession(TokenContext);
-                TokenContext.Load(taxSession.TermStores, t => t.Include(t => t.Id, t => t.IsOnline));
+                TaxonomySession session = TaxonomySession.GetTaxonomySession(TokenContext);
+                var termStore = session.GetDefaultSiteCollectionTermStore();
+                TokenContext.Load(termStore, t => t.Id);
                 TokenContext.ExecuteQueryRetry();
-                var termStore = taxSession.TermStores.FirstOrDefault(t => t.ServerObjectIsNull == false && t.IsOnline);
-                //var termStore = session.GetDefaultSiteCollectionTermStore();
-                //TokenContext.Load(termStore, t => t.Id);
-                //TokenContext.ExecuteQueryRetry();
                 if (termStore != null)
                 {
                     CacheValue = termStore.Id.ToString();

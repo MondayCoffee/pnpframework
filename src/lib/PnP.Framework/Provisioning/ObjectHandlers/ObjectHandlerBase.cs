@@ -152,19 +152,24 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
                         try
                         {
-                            taxSession.EnsureProperty(t => t.TermStores);
-                            store = taxSession.TermStores.GetById(termStoreId);
-                            context.Load(store);
-                            context.ExecuteQueryRetry();
+                            taxSession.EnsureProperty(t => t.TermStores.Include(t=>t.Id, t => t.IsOnline, t => t.DefaultLanguage));
+                            store = taxSession.TermStores.FirstOrDefault(t => t.ServerObjectIsNull == false && t.IsOnline && t.Id == termStoreId);
+                            //store = taxSession.TermStores.GetById(termStoreId);
+                            //context.Load(store);
+                            //context.ExecuteQueryRetry();
                         }
                         catch (Exception ex)
                         {
-                            //for some tenant above code does not find DefaultSiteCollectionTermStore so we try explizit
                             var err = ex.Message; //take out after debug
+                        }
+
+                        if(store == null)
+                        {
                             try
                             {
+                                //for some tenant above code does not find DefaultSiteCollectionTermStore so we try explizit
                                 store = taxSession.GetDefaultSiteCollectionTermStore();
-                                context.Load(store);
+                                context.Load(store, t=>t.Id, t => t.IsOnline, t => t.DefaultLanguage);
                                 context.ExecuteQueryRetry();
                             }
                             catch (Exception ex1)
