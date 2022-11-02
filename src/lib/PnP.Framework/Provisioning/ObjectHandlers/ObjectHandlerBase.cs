@@ -148,47 +148,68 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     {
                         var termStoreId = Guid.Parse(termStoreIdElement.Value);
                         TaxonomySession taxSession = TaxonomySession.GetTaxonomySession(context);
+                        TermStore store = null;
+
                         try
                         {
                             taxSession.EnsureProperty(t => t.TermStores);
-                            var store = taxSession.TermStores.GetById(termStoreId);
+                            store = taxSession.TermStores.GetById(termStoreId);
                             context.Load(store);
                             context.ExecuteQueryRetry();
-                            if (store.ServerObjectIsNull.HasValue && !store.ServerObjectIsNull.Value)
+                        }
+                        catch (Exception ex)
+                        {
+                            //for some tenant above code does not find DefaultSiteCollectionTermStore so we try explizit
+                            var err = ex.Message; //take out after debug
+                            try
                             {
-                                var termSetIdElement = fieldElement.XPathSelectElement("//ArrayOfProperty/Property[Name='TermSetId']/Value");
-                                if (termSetIdElement != null)
-                                {
-                                    var termSetId = Guid.Parse(termSetIdElement.Value);
-                                    try
-                                    {
-                                        var termSet = store.GetTermSet(termSetId);
-                                        context.Load(termSet);
-                                        context.ExecuteQueryRetry();
-                                        isValid = termSet.ServerObjectIsNull.HasValue && !termSet.ServerObjectIsNull.Value;
-                                    }
-                                    catch (Exception)
-                                    {
-                                        isValid = false;
-                                    }
-                                }
+                                store = taxSession.GetDefaultSiteCollectionTermStore();
+                                context.Load(store);
+                                context.ExecuteQueryRetry();
+                            }
+                            catch (Exception ex1)
+                            {
+                                var err1 = ex1.Message; //take out after debug
+                                return false;
                             }
                         }
-                        catch (Exception)
+
+                        if (store == null)
+                            return false;
+    
+                        if (store.ServerObjectIsNull.HasValue && !store.ServerObjectIsNull.Value)
                         {
-                            isValid = false;
+                            if (store.Id != termStoreId) 
+                                return false; //check if we went through fallback above and termStoreId would not be the DefaultSiteCollectionTermStore
+
+                            var termSetIdElement = fieldElement.XPathSelectElement("//ArrayOfProperty/Property[Name='TermSetId']/Value");
+                            if (termSetIdElement != null)
+                            {
+                                var termSetId = Guid.Parse(termSetIdElement.Value);
+                                try
+                                {
+                                    var termSet = store.GetTermSet(termSetId);
+                                    context.Load(termSet);
+                                    context.ExecuteQueryRetry();
+                                    isValid = termSet.ServerObjectIsNull.HasValue && !termSet.ServerObjectIsNull.Value;
+                                }
+                                catch (Exception)
+                                {
+                                    return false;
+                                }
+                            }
                         }
                     }
                     else
                     {
-                        isValid = false;
+                        return false;
                     }
                 }
             }
             else
             {
                 //Some tokens where not replaced
-                isValid = false;
+                return false;
             }
             return isValid;
         }
