@@ -35,7 +35,7 @@ namespace PnP.Framework.Provisioning.Model
         /// <summary>
         /// Defines the Instance Id for Canvas Control of a Client-side Page.
         /// </summary>
-        public Guid ControlId { get; set; }
+        public Guid? ControlId { get; set; }
 
         /// <summary>
         /// Defines the order of the Canvas Control for a Client-side Page.
@@ -168,5 +168,6 @@ namespace PnP.Framework.Provisioning.Model
         SpacesText2D,
         SpacesVideoPlayer,
         SpacesPeople,
+        BackgroundImage
     }
 }

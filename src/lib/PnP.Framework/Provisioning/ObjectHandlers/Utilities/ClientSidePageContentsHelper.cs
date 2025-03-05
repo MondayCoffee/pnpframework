@@ -292,7 +292,15 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                                 {
                                     // set ControlId to webpart id
                                     //controlInstance.ControlId = Guid.Parse((control as Pages.ClientSideWebPart).WebPartId);
-                                    controlInstance.ControlId = Guid.Parse((control as PnPCore.IPageWebPart).WebPartId);
+                                    if(Guid.TryParse((control as PnPCore.IPageWebPart).WebPartId, out var webPartId))
+                                    {
+                                        controlInstance.ControlId = webPartId;
+                                    }
+                                    else
+                                    {
+                                        controlInstance.ControlId = null;
+                                    }
+
                                     //var webPartType = Pages.ClientSidePage.NameToClientSideWebPartEnum((control as Pages.ClientSideWebPart).WebPartId);
                                     var webPartType = pageToExtract.WebPartIdToDefaultWebPart((control as PnPCore.IPageWebPart).WebPartId);
                                     switch (webPartType)

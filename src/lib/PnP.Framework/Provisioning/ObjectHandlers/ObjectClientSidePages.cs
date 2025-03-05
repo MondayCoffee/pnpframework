@@ -791,13 +791,22 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                                 else
                                 {
 
-                                    PnPCore.IPageWebPart myWebPart = page.NewWebPart();
-                                    myWebPart.Order = control.Order;
-                                    
+                                    JObject json = null;
+                                    var isBackgroundImageControl = false;
 
                                     if (!string.IsNullOrEmpty(control.JsonControlData))
                                     {
-                                        var json = JsonConvert.DeserializeObject<JObject>(control.JsonControlData);
+                                        json = JsonConvert.DeserializeObject<JObject>(control.JsonControlData);
+
+                                        isBackgroundImageControl = json["properties"]?["zoneBackground"].HasValues ?? false;
+                                    }
+
+                                    var myWebPart = isBackgroundImageControl ? page.NewBackGroundImageControl() : page.NewWebPart();
+                                    
+                                    myWebPart.Order = control.Order;
+
+                                    if (json != null)
+                                    {
                                         if (json["instanceId"] != null && json["instanceId"].Type != JTokenType.Null)
                                         {
                                             if (Guid.TryParse(json["instanceId"].Value<string>(), out Guid instanceId))
