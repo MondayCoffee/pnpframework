@@ -801,7 +801,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                                         isBackgroundImageControl = json["properties"]?["zoneBackground"].HasValues ?? false;
                                     }
 
-                                    var myWebPart = isBackgroundImageControl ? page.NewBackGroundImageControl() : page.NewWebPart();
+                                    var myWebPart = isBackgroundImageControl ? page.NewSectionBackgroundControl() : page.NewWebPart();
                                     
                                     myWebPart.Order = control.Order;
 
