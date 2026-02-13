@@ -312,6 +312,13 @@ namespace PnP.Framework.Provisioning.Connectors.OpenXML
             return pkgList;
         }
 
+        /// <summary>
+        /// Shared reader settings that instruct the XAML parser to preserve
+        /// whitespace (prevents collapsing consecutive spaces in string values).
+        /// </summary>
+        private static readonly XamlXmlReaderSettings _preserveWhitespaceSettings =
+            new XamlXmlReaderSettings { XmlSpacePreserve = true };
+
         private T GetXamlSerializedPackagePartValue<T>(PackagePart part) where T : class
         {
             if (part == null)
@@ -322,27 +329,29 @@ namespace PnP.Framework.Provisioning.Connectors.OpenXML
             T obj = null;
             using (Stream stream = part.GetStream(FileMode.Open))
             {
-
                 using (var streamReader = new StreamReader(stream))
                 {
                     var textContent = streamReader.ReadToEnd();
+                    if (string.IsNullOrWhiteSpace(textContent))
+                    {
+                        return null;
+                    }
+
                     if (textContent.Contains("clr-namespace:OfficeDevPnP.Core.Framework.Provisioning.Connectors.OpenXML.Model;assembly=OfficeDevPnP.Core"))
                     {
                         textContent = textContent.Replace("clr-namespace:OfficeDevPnP.Core.Framework.Provisioning.Connectors.OpenXML.Model;assembly=OfficeDevPnP.Core", "clr-namespace:PnP.Framework.Provisioning.Connectors.OpenXML.Model;assembly=PnP.Framework");
-                        var contentBytes = System.Text.Encoding.UTF8.GetBytes(textContent);
-                        using (var memoryStream = new MemoryStream(contentBytes))
-                        {
-                            obj = (T)XamlServices.Load(memoryStream);
-                        }
                     }
-                    else
+
+                    var contentBytes = System.Text.Encoding.UTF8.GetBytes(textContent);
+                    using (var memoryStream = new MemoryStream(contentBytes))
                     {
-                        stream.Seek(0, SeekOrigin.Begin);
-                        if (stream.Length == 0)
+                        // Use XmlSpacePreserve to prevent XAML whitespace normalization
+                        // from collapsing consecutive spaces in string values
+                        // (e.g. file paths in files-map.xml).
+                        using (var reader = new XamlXmlReader(memoryStream, _preserveWhitespaceSettings))
                         {
-                            return null;
+                            obj = (T)XamlServices.Load(reader);
                         }
-                        obj = (T)XamlServices.Load(stream);
                     }
                 }
             }
