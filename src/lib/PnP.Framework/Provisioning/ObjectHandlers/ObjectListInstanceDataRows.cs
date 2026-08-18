@@ -283,7 +283,13 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     {
                         continue;
                     }
-                    var extractionConfig = creationInfo.ExtractConfiguration.Lists.Lists.FirstOrDefault(e => e.Title.Equals(siteList.Title) || siteList.RootFolder.ServerRelativeUrl.EndsWith(e.Title, StringComparison.InvariantCultureIgnoreCase));
+                    var matchingExtractionConfigs = creationInfo.ExtractConfiguration?.Lists?.Lists?
+                        .Where(e => e.Title != null &&
+                            (e.Title.Equals(siteList.Title, StringComparison.InvariantCultureIgnoreCase) ||
+                             siteList.RootFolder.ServerRelativeUrl.EndsWith($"/{e.Title.TrimStart('/')}", StringComparison.InvariantCultureIgnoreCase)))
+                        .ToList();
+                    var extractionConfig = matchingExtractionConfigs?.FirstOrDefault(e => e.Title.Equals(siteList.Title, StringComparison.InvariantCultureIgnoreCase))
+                        ?? matchingExtractionConfigs?.FirstOrDefault();
                     CamlQuery camlQuery = CamlQuery.CreateAllItemsQuery();
                     Model.Configuration.Lists.Lists.ExtractListsQueryConfiguration queryConfig = null;
                     if (extractionConfig.Query != null)
