@@ -6,10 +6,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## Current nightly
+
+### Changed
+
+- Updates AngleSharp to 1.5.2 and AngleSharp.Css to 1.0.0. [Adam-IT - Adam Wójcik]
+- Fix ListUserDelta throwing on a null delta token and never returning one [svermaak]
+- Make the provisioning field XML cache thread safe- #1257 [svermaak]
+- Stop forcing a legacy TLS preference on net10.0 [svermaak]
+- Keep ListInstance DataSource across a template round trip- #1261 [svermaak]
+
+## [1.20.0]
 
 ### Added
 
+### Changed
+
+- Bumped MSAL.NET to 4.85.2 #1245
+- Added support for DelosCloud, BleuCloud and GovSGCloud environment to support sovereign clouds #1245 [gautamdsheth - Gautam Sheth]
+- Fixed empty section issue deployed from XML-Template #1179 [czullu - Christian Zuellig]
+- Fixed Owner/Member add and delete issue #1247 [singingknight - Per Jakobsen] 
+
+## [1.19.0]
+
+### Added
+
+- Support for .NET 10.0
 - Provisioning engine support for flexible sections on pages #1159 [czullu - Christian Zuellig]
 
 ### Changed
@@ -18,6 +40,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Removed the dependency on Microsof.Graph packages #1003 [quails4Eva]
 - Fixed exception when trowing error message in page transformation #1158 [AlanJinTS - Yihua Jin]
 - Safely handle null footer DisplayName in ProvisionObjects to avoid REST API failure #1161 [vascoazevedo08 - Vasco Azevedo]
+- Fixed exporting vertical section controls with wrong Column #1232 [nicolaor - Rene Nicolao]
 
 ## [1.18.0]
 

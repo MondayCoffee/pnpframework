@@ -252,23 +252,30 @@ namespace PnP.Framework.Graph
 
                     int driveRetryCount = retryCount;
 
-                    while (driveRetryCount > 0 && string.IsNullOrEmpty(modernSiteUrl))
+                    if (addedGroup.AdditionalData?.TryGetValue("id", out var groupId) == true)
                     {
-                        try
+                        while (driveRetryCount > 0 && string.IsNullOrEmpty(modernSiteUrl))
                         {
-                            modernSiteUrl = GetUnifiedGroupSiteUrl(addedGroup.GroupId, accessToken, azureEnvironment: azureEnvironment);
-                        }
-                        catch
-                        {
-                            // Skip any exception and simply retry
-                        }
+                            try
+                            {
+                                    modernSiteUrl = GetUnifiedGroupSiteUrl(groupId.ToString(), accessToken, azureEnvironment: azureEnvironment);
+                            }
+                            catch
+                            {
+                                // Skip any exception and simply retry
+                            }
 
-                        // In case of failure retry up to 10 times, with 500ms delay in between
-                        if (string.IsNullOrEmpty(modernSiteUrl))
-                        {
-                            Task.Delay(delay * (retryCount - driveRetryCount)).GetAwaiter().GetResult();
-                            driveRetryCount--;
+                            // In case of failure retry up to 10 times, with 500ms delay in between
+                            if (string.IsNullOrEmpty(modernSiteUrl))
+                            {
+                                Task.Delay(delay * (retryCount - driveRetryCount)).GetAwaiter().GetResult();
+                                driveRetryCount--;
+                            }
                         }
+                    }
+                    else
+                    {
+                        throw new Exception("Could not find the group id in the additional data returned from the Graph when creating the unified group");
                     }
 
                     group.SiteUrl = modernSiteUrl;
@@ -317,8 +324,9 @@ namespace PnP.Framework.Graph
                     try
                     {
                         // And if any, add it to the collection of group's members
-                        var memberUrl = $"{groupRequestUrl}/members/{user.Id}/ref";
-                        HttpHelper.MakePostRequest(memberUrl, accessToken, retryCount: retryCount, delay: delay);
+                        var memberUrl = $"{groupRequestUrl}/members/$ref";
+                        object content = new JObject { ["@odata.id"] = $"{userRequestUrl}/{user.Id}" };
+                        HttpHelper.MakePostRequest(memberUrl, content, HttpHelper.JsonContentType, accessToken, retryCount: retryCount, delay: delay);
                     }
                     catch (Exception ex) when (ex.Message.Contains("Request_BadRequest") &&
                             ex.Message.Contains("added object references already exist"))
@@ -346,7 +354,7 @@ namespace PnP.Framework.Graph
                     try
                     {
                         // If it is not in the list of current members, just remove it
-                        var memberUrl = $"{groupRequestUrl}/members/{member.Id}/ref";
+                        var memberUrl = $"{groupRequestUrl}/members/{member.Id}/$ref";
                         HttpHelper.MakeDeleteRequest(memberUrl, accessToken, retryCount: retryCount, delay: delay);
                     }
                     catch (HttpResponseException ex) when (ex.StatusCode == 400)
@@ -383,8 +391,9 @@ namespace PnP.Framework.Graph
                     try
                     {
                         // And if any, add it to the collection of group's owners
-                        var memberUrl = $"{groupRequestUrl}/owners/{user.Id}/ref";
-                        HttpHelper.MakePostRequest(memberUrl, accessToken, retryCount: retryCount, delay: delay);
+                        var memberUrl = $"{groupRequestUrl}/owners/$ref";
+                        object content = new JObject { ["@odata.id"] = $"{userRequestUrl}/{user.Id}" };
+                        HttpHelper.MakePostRequest(memberUrl, content, HttpHelper.JsonContentType, accessToken, retryCount: retryCount, delay: delay);
                     }
                     catch (Exception ex) when (ex.Message.Contains("Request_BadRequest") &&
                             ex.Message.Contains("added object references already exist"))
@@ -412,7 +421,7 @@ namespace PnP.Framework.Graph
                     try
                     {
                         // If it is not in the list of current owners, just remove it
-                        var memberUrl = $"{groupRequestUrl}/owners/{owner.Id}/ref";
+                        var memberUrl = $"{groupRequestUrl}/owners/{owner.Id}/$ref";
                         HttpHelper.MakeDeleteRequest(memberUrl, accessToken, retryCount: retryCount, delay: delay);
                     }
                     catch (HttpResponseException ex) when (ex.StatusCode == 400)
@@ -1153,7 +1162,7 @@ namespace PnP.Framework.Graph
                         try
                         {
                             // If it is not in the list of current members, just remove it
-                            var deleteGroupMemberUrl = $"{groupRequestUrl}/members/{userId}/ref";
+                            var deleteGroupMemberUrl = $"{groupRequestUrl}/members/{userId}/$ref";
                             HttpHelper.MakeDeleteRequest(deleteGroupMemberUrl, accessToken, retryCount: retryCount, delay: delay);
                         }
                         catch (HttpResponseException ex) when (ex.StatusCode == 400)
@@ -1206,7 +1215,7 @@ namespace PnP.Framework.Graph
                         try
                         {
                             // If it is not in the list of current owners, just remove it
-                            var deleteGroupMemberUrl = $"{groupRequestUrl}/owners/{userId}/ref";
+                            var deleteGroupMemberUrl = $"{groupRequestUrl}/owners/{userId}/$ref";
                             HttpHelper.MakeDeleteRequest(deleteGroupMemberUrl, accessToken, retryCount: retryCount, delay: delay);
                         }
                         catch (HttpResponseException ex) when (ex.StatusCode == 400)

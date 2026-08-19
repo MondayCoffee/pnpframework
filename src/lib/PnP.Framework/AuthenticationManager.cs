@@ -51,7 +51,18 @@ namespace PnP.Framework
         /// 
         /// </summary>
         USGovernmentDoD = 6,
-
+        /// <summary>
+        /// 
+        /// </summary>
+        BleuCloud = 7,
+        /// <summary>
+        /// 
+        /// </summary>
+        DelosCloud = 8,
+        /// <summary>
+        /// 
+        /// </summary>
+        GovSGCloud = 9,
         /// <summary>
         /// Custom cloud configuration, specify the endpoints manually
         /// </summary>
@@ -222,12 +233,13 @@ namespace PnP.Framework
         /// <param name="identityHeader">Identity header available as an environment variable in Azure. Used to help mitigate server-side request forgery (SSRF) attacks.</param>
         /// <param name="managedIdentityType">Type of Managed Identity that should be used. Defaults to System Assigned Managed Identity.</param>
         /// <param name="managedIdentityUserAssignedIdentifier">The identifier of the User Assigned Managed Identity. Can be the clientId, objectId or resourceId. Mandatory when <paramref name="managedIdentityType"/> is not SystemAssigned. Should be omitted if it is SystemAssigned.</param>
-        public static AuthenticationManager CreateWithManagedIdentity(string endpoint, string identityHeader, ManagedIdentityType managedIdentityType = ManagedIdentityType.SystemAssigned, string managedIdentityUserAssignedIdentifier = null)
+        /// <param name="azureEnvironment">The azure environment to use. Defaults to AzureEnvironment.Production</param>
+        public static AuthenticationManager CreateWithManagedIdentity(string endpoint, string identityHeader, ManagedIdentityType managedIdentityType = ManagedIdentityType.SystemAssigned, string managedIdentityUserAssignedIdentifier = null, AzureEnvironment azureEnvironment = AzureEnvironment.Production)
         {
-            return new AuthenticationManager(endpoint, identityHeader, managedIdentityType, managedIdentityUserAssignedIdentifier);
+            return new AuthenticationManager(endpoint, identityHeader, managedIdentityType, managedIdentityUserAssignedIdentifier, azureEnvironment);
         }
 
-        // <summary>
+        /// <summary>
         /// Creates a new instance of the Authentication Manager that works with a User Assigned Managed Identity (MI) in Azure configured as a Federated Identity Credential on an Entra ID application registration.
         /// </summary>
         /// <param name="endpoint">The endpoint at which the Managed Identity Service is being hosted from which a token can be acquired</param>
@@ -236,9 +248,10 @@ namespace PnP.Framework
         /// <param name="appTenantId">Tenant ID of the Entra ID application registration where the MI is added as a Federated Identity Credential. This must be registered in same tenant as the MI.</param>
         /// <param name="managedIdentityType">Type of Managed Identity that should be used. Cannot be System Assigned.</param>
         /// <param name="managedIdentityUserAssignedIdentifier">The identifier of the User Assigned Managed Identity. Can be the clientId, objectId or resourceId.</param>
-        public static AuthenticationManager CreateWithManagedIdentityFederatedIdentityCredential(string endpoint, string identityHeader, string appClientId, string appTenantId, ManagedIdentityType managedIdentityType, string managedIdentityUserAssignedIdentifier)
+        /// <param name="azureEnvironment">The azure environment to use. Defaults to AzureEnvironment.Production</param>
+        public static AuthenticationManager CreateWithManagedIdentityFederatedIdentityCredential(string endpoint, string identityHeader, string appClientId, string appTenantId, ManagedIdentityType managedIdentityType, string managedIdentityUserAssignedIdentifier, AzureEnvironment azureEnvironment = AzureEnvironment.Production)
         {
-            return new AuthenticationManager(endpoint, identityHeader, appClientId, appTenantId, managedIdentityType, managedIdentityUserAssignedIdentifier);
+            return new AuthenticationManager(endpoint, identityHeader, appClientId, appTenantId, managedIdentityType, managedIdentityUserAssignedIdentifier, azureEnvironment);
         }
 
         /// <summary>
@@ -341,7 +354,7 @@ namespace PnP.Framework
         /// </summary>
         public AuthenticationManager()
         {
-#if !NET9_0
+#if !NET9_0_OR_GREATER
             // Set the TLS preference. Needed on some server os's to work when Office 365 removes support for TLS 1.0
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 #endif
@@ -366,7 +379,8 @@ namespace PnP.Framework
         /// <param name="identityHeader">Identity header available as an environment variable in Azure. Used to help mitigate server-side request forgery (SSRF) attacks.</param>
         /// <param name="managedIdentityType">Type of Managed Identity that should be used. Defaults to System Assigned Managed Identity.</param>
         /// <param name="managedIdentityUserAssignedIdentifier">The identifier of the User Assigned Managed Identity. Can be the clientId, objectId or resourceId. Mandatory when <paramref name="managedIdentityType"/> is not SystemAssigned. Should be omitted if it is SystemAssigned.</param>
-        public AuthenticationManager(string endpoint, string identityHeader, ManagedIdentityType managedIdentityType = ManagedIdentityType.SystemAssigned, string managedIdentityUserAssignedIdentifier = null)
+        /// <param name="azureEnvironment">The azure environment to use. Defaults to AzureEnvironment.Production</param>
+        public AuthenticationManager(string endpoint, string identityHeader, ManagedIdentityType managedIdentityType = ManagedIdentityType.SystemAssigned, string managedIdentityUserAssignedIdentifier = null, AzureEnvironment azureEnvironment = AzureEnvironment.Production)
         {
             if (managedIdentityType != ManagedIdentityType.SystemAssigned && string.IsNullOrWhiteSpace(managedIdentityUserAssignedIdentifier))
             {
@@ -376,6 +390,7 @@ namespace PnP.Framework
             authenticationType = managedIdentityType == ManagedIdentityType.SystemAssigned ? ClientContextType.SystemAssignedManagedIdentity : ClientContextType.UserAssignedManagedIdentity;
             this.managedIdentityType = managedIdentityType;
             this.managedIdentityUserAssignedIdentifier = managedIdentityUserAssignedIdentifier;
+            this.azureEnvironment = azureEnvironment;
 
             // Construct the URL to call to get the token based on the type of Managed Identity in use
             switch (managedIdentityType)
@@ -389,7 +404,6 @@ namespace PnP.Framework
                     Diagnostics.Log.Debug(Constants.LOGGING_SOURCE, $"Using the user assigned managed identity with object/principal ID: {managedIdentityUserAssignedIdentifier}");
                     mi = ManagedIdentityApplicationBuilder.Create(ManagedIdentityId.WithUserAssignedObjectId(managedIdentityUserAssignedIdentifier)).WithHttpClientFactory(HttpClientFactory).Build();
                     break;
-
 
                 case ManagedIdentityType.UserAssignedByResourceId:
                     Diagnostics.Log.Debug(Constants.LOGGING_SOURCE, $"Using the user assigned managed identity with Azure Resource ID: {managedIdentityUserAssignedIdentifier}");
@@ -413,7 +427,8 @@ namespace PnP.Framework
         /// <param name="appTenantId">Tenant ID of the Entra ID application registration where the MI is added as a Federated Identity Credential. This must be registered in same tenant as the MI.</param>
         /// <param name="managedIdentityType">Type of Managed Identity that should be used. Cannot be System Assigned.</param>
         /// <param name="managedIdentityUserAssignedIdentifier">The identifier of the User Assigned Managed Identity. Can be the clientId, objectId or resourceId.</param>
-        public AuthenticationManager(string endpoint, string identityHeader, string appClientId, string appTenantId, ManagedIdentityType managedIdentityType, string managedIdentityUserAssignedIdentifier)
+        /// <param name="azureEnvironment">The azure environment to use. Defaults to AzureEnvironment.Production</param>
+        public AuthenticationManager(string endpoint, string identityHeader, string appClientId, string appTenantId, ManagedIdentityType managedIdentityType, string managedIdentityUserAssignedIdentifier, AzureEnvironment azureEnvironment = AzureEnvironment.Production)
         {
             if (managedIdentityType == ManagedIdentityType.SystemAssigned)
             {
@@ -438,6 +453,7 @@ namespace PnP.Framework
             authenticationType = ClientContextType.UserAssignedManagedIdentityFederatedCredential;
             this.managedIdentityType = managedIdentityType;
             this.managedIdentityUserAssignedIdentifier = managedIdentityUserAssignedIdentifier;
+            this.azureEnvironment = azureEnvironment;
 
             // Construct the URL to call to get the token based on the type of Managed Identity in use
             IManagedIdentityApplication managedIdentityApplication = null;
@@ -452,7 +468,6 @@ namespace PnP.Framework
                     Diagnostics.Log.Debug(Constants.LOGGING_SOURCE, $"Using the user assigned managed identity with object/principal ID: {managedIdentityUserAssignedIdentifier} as Federated Credential for client ID: {appClientId} in tenant: {appTenantId}");
                     managedIdentityApplication = ManagedIdentityApplicationBuilder.Create(ManagedIdentityId.WithUserAssignedObjectId(managedIdentityUserAssignedIdentifier)).WithHttpClientFactory(HttpClientFactory).Build();
                     break;
-
 
                 case ManagedIdentityType.UserAssignedByResourceId:
                     Diagnostics.Log.Debug(Constants.LOGGING_SOURCE, $"Using the user assigned managed identity with Azure Resource ID: {managedIdentityUserAssignedIdentifier} as Federated Credential for client ID: {appClientId} in tenant: {appTenantId}");
@@ -836,11 +851,13 @@ namespace PnP.Framework
                 this.azureEnvironment = pnPContext.Environment switch
                 {
                     Microsoft365Environment.Production => AzureEnvironment.Production,
-                    Microsoft365Environment.Germany => AzureEnvironment.Germany,
                     Microsoft365Environment.China => AzureEnvironment.China,
                     Microsoft365Environment.USGovernment => AzureEnvironment.USGovernment,
                     Microsoft365Environment.USGovernmentHigh => AzureEnvironment.USGovernmentHigh,
                     Microsoft365Environment.USGovernmentDoD => AzureEnvironment.USGovernmentDoD,
+                    Microsoft365Environment.BleuCloud => AzureEnvironment.BleuCloud,
+                    Microsoft365Environment.DelosCloud => AzureEnvironment.DelosCloud,
+                    Microsoft365Environment.GovSGCloud => AzureEnvironment.GovSGCloud,
                     Microsoft365Environment.PreProduction => AzureEnvironment.PPE,
                     _ => AzureEnvironment.Production
                 };
@@ -1478,7 +1495,7 @@ namespace PnP.Framework
                 //       PowerShell do support SharePoint on-premises.
                 webRequestEventArgs.WebRequestExecutor.WebRequest.Credentials = (sender as ClientContext).Credentials;
                 // CSOM for .NET Standard does not handle request digest management, a POST to client.svc requires a digest, so ensuring that
-                webRequestEventArgs.WebRequestExecutor.RequestHeaders["X-RequestDigest"] = (sender as ClientContext).GetOnPremisesRequestDigestAsync().GetAwaiter().GetResult();
+                webRequestEventArgs.WebRequestExecutor.RequestHeaders["X-RequestDigest"] = Task.Run(async () => await (sender as ClientContext).GetOnPremisesRequestDigestAsync()).GetAwaiter().GetResult();
                 // Add Request Header to force Windows Authentication which avoids an issue if multiple authentication providers are enabled on a webapplication
                 webRequestEventArgs.WebRequestExecutor.RequestHeaders["X-FORMS_BASED_AUTH_ACCEPTED"] = "f";
             };
@@ -1562,11 +1579,10 @@ namespace PnP.Framework
             return (environment) switch
             {
                 AzureEnvironment.Production => "accesscontrol.windows.net",
-                AzureEnvironment.Germany => "microsoftonline.de",
                 AzureEnvironment.China => "accesscontrol.chinacloudapi.cn",
                 AzureEnvironment.USGovernment => "accesscontrol.windows.net",
                 AzureEnvironment.USGovernmentHigh => "microsoftonline.us",
-                AzureEnvironment.USGovernmentDoD => "microsoftonline.us",
+                AzureEnvironment.USGovernmentDoD => "microsoftonline.us",                
                 AzureEnvironment.PPE => "windows-ppe.net",
                 _ => "accesscontrol.windows.net"
             };
@@ -1582,11 +1598,13 @@ namespace PnP.Framework
             return (environment) switch
             {
                 AzureEnvironment.Production => "accounts",
-                AzureEnvironment.Germany => "login",
                 AzureEnvironment.China => "accounts",
                 AzureEnvironment.USGovernment => "login",
                 AzureEnvironment.USGovernmentHigh => "login",
                 AzureEnvironment.USGovernmentDoD => "login",
+                AzureEnvironment.BleuCloud => "login",
+                AzureEnvironment.DelosCloud => "login",
+                AzureEnvironment.GovSGCloud => "login",
                 AzureEnvironment.PPE => "login",
                 _ => "accounts"
             };
@@ -1676,11 +1694,13 @@ namespace PnP.Framework
             return (environment) switch
             {
                 AzureEnvironment.Production => "https://login.microsoftonline.com",
-                AzureEnvironment.Germany => "https://login.microsoftonline.de",
                 AzureEnvironment.China => "https://login.chinacloudapi.cn",
                 AzureEnvironment.USGovernment => "https://login.microsoftonline.com",
                 AzureEnvironment.USGovernmentHigh => "https://login.microsoftonline.us",
                 AzureEnvironment.USGovernmentDoD => "https://login.microsoftonline.us",
+                AzureEnvironment.BleuCloud => "https://login.sovcloud-identity.fr",
+                AzureEnvironment.DelosCloud => "https://login.sovcloud-identity.de",
+                AzureEnvironment.GovSGCloud => "https://login.sovcloud-identity.sg",
                 AzureEnvironment.PPE => "https://login.windows-ppe.net",
                 _ => "https://login.microsoftonline.com"
             };
@@ -1714,11 +1734,7 @@ namespace PnP.Framework
                 case AzureEnvironment.USGovernment:
                     {
                         return "graph.microsoft.com";
-                    }
-                case AzureEnvironment.Germany:
-                    {
-                        return "graph.microsoft.de";
-                    }
+                    }                
                 case AzureEnvironment.China:
                     {
                         return "microsoftgraph.chinacloudapi.cn";
@@ -1730,6 +1746,18 @@ namespace PnP.Framework
                 case AzureEnvironment.USGovernmentDoD:
                     {
                         return "dod-graph.microsoft.us";
+                    }
+                case AzureEnvironment.BleuCloud:
+                    {
+                        return "graph.svc.sovcloud.fr";
+                    }
+                case AzureEnvironment.DelosCloud:
+                    {
+                        return "graph.svc.sovcloud.de";
+                    }
+                case AzureEnvironment.GovSGCloud:
+                    {
+                        return "graph.svc.sovcloud.sg";
                     }
                 default:
                     {
@@ -1770,8 +1798,10 @@ namespace PnP.Framework
                 AzureEnvironment.USGovernment => "com",
                 AzureEnvironment.USGovernmentHigh => "us",
                 AzureEnvironment.USGovernmentDoD => "us",
-                AzureEnvironment.Germany => "de",
                 AzureEnvironment.China => "cn",
+                AzureEnvironment.BleuCloud => "fr",
+                AzureEnvironment.DelosCloud => "de",
+                AzureEnvironment.GovSGCloud => "sg",
                 _ => "com"
             };
         }
@@ -1972,15 +2002,25 @@ namespace PnP.Framework
                         {
                             builder = builder.WithAuthority(AzureCloudInstance.AzureUsGovernment, AadAuthorityAudience.AzureAdMyOrg);
                             break;
-                        }
-                    case AzureEnvironment.Germany:
-                        {
-                            builder = builder.WithAuthority(AzureCloudInstance.AzureGermany, AadAuthorityAudience.AzureAdMyOrg);
-                            break;
-                        }
+                        }                    
                     case AzureEnvironment.China:
                         {
                             builder = builder.WithAuthority(AzureCloudInstance.AzureChina, AadAuthorityAudience.AzureAdMyOrg);
+                            break;
+                        }
+                    case AzureEnvironment.BleuCloud:
+                        {
+                            builder = builder.WithAuthority(AzureCloudInstance.GovFr, AadAuthorityAudience.AzureAdMyOrg);
+                            break;
+                        }
+                    case AzureEnvironment.DelosCloud:
+                        {
+                            builder = builder.WithAuthority(AzureCloudInstance.GovDe, AadAuthorityAudience.AzureAdMyOrg);
+                            break;
+                        }
+                    case AzureEnvironment.GovSGCloud:
+                        {
+                            builder = builder.WithAuthority(AzureCloudInstance.GovSg, AadAuthorityAudience.AzureAdMyOrg);
                             break;
                         }
                 }
@@ -2017,14 +2057,24 @@ namespace PnP.Framework
                             builder = builder.WithAuthority(AzureCloudInstance.AzureUsGovernment, AadAuthorityAudience.AzureAdMyOrg);
                             break;
                         }
-                    case AzureEnvironment.Germany:
-                        {
-                            builder = builder.WithAuthority(AzureCloudInstance.AzureGermany, AadAuthorityAudience.AzureAdMyOrg);
-                            break;
-                        }
                     case AzureEnvironment.China:
                         {
                             builder = builder.WithAuthority(AzureCloudInstance.AzureChina, AadAuthorityAudience.AzureAdMyOrg);
+                            break;
+                        }
+                    case AzureEnvironment.BleuCloud:
+                        {
+                            builder = builder.WithAuthority(AzureCloudInstance.GovFr, AadAuthorityAudience.AzureAdMyOrg);
+                            break;
+                        }
+                    case AzureEnvironment.DelosCloud:
+                        {
+                            builder = builder.WithAuthority(AzureCloudInstance.GovDe, AadAuthorityAudience.AzureAdMyOrg);
+                            break;
+                        }
+                    case AzureEnvironment.GovSGCloud:
+                        {
+                            builder = builder.WithAuthority(AzureCloudInstance.GovSg, AadAuthorityAudience.AzureAdMyOrg);
                             break;
                         }
                 }
