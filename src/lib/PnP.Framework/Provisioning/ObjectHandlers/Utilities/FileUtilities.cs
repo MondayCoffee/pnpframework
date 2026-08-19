@@ -6,9 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text.Json;
-using System.Web;
 
 namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
 {
@@ -165,6 +163,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                         {
                             fileName = serverRelativeUrl;
                         }
+                        web.EnsureProperties(w => w.ServerRelativeUrl);
                         web.Context.Load(file);
                         web.Context.ExecuteQueryRetry();
                         ClientResult<Stream> stream = file.OpenBinaryStream();

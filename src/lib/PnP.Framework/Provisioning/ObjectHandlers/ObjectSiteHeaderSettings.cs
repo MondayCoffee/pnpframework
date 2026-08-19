@@ -77,7 +77,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     {
                         Uri webUri = new Uri(web.Url);
                         string webUrl = $"{webUri.Scheme}://{webUri.DnsSafeHost}";
-                        backgroundImageUrl = backgroundImageUrl.Replace(webUrl, "");
+                        backgroundImageUrl = Uri.UnescapeDataString(backgroundImageUrl).Replace(webUrl, "");
 
                         if (Utilities.FileUtilities.PersistFile(web, creationInfo, scope, this, backgroundImageUrl))
                         {
