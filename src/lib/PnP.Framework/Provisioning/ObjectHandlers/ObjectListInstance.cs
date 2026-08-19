@@ -2330,7 +2330,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     }
                 })
                 && !creationInfo.ExtractConfiguration.Lists.Lists.Any(i => i.Title.Equals(siteList.Title))
-                && !creationInfo.ExtractConfiguration.Lists.Lists.Any(i => siteList.RootFolder.ServerRelativeUrl.EndsWith(i.Title, StringComparison.InvariantCultureIgnoreCase)))
+                && !creationInfo.ExtractConfiguration.Lists.Lists.Any(i => siteList.RootFolder.ServerRelativeUrl.EndsWith($"/{i.Title.TrimStart('/')}", StringComparison.InvariantCultureIgnoreCase)))
             {
                 return true;
             }
@@ -2354,7 +2354,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                       }
                   };
                 var listConfig = configuration.Lists.Lists.FirstOrDefault(l => l.Title.Equals(siteList.Title)
-                || siteList.RootFolder.ServerRelativeUrl.EndsWith(l.Title, StringComparison.InvariantCulture)
+                || siteList.RootFolder.ServerRelativeUrl.EndsWith($"/{l.Title.TrimStart('/')}", StringComparison.InvariantCultureIgnoreCase)
                 || matchGuid(l.Title, siteList.Id));
 
                 return listConfig != null && listConfig.IncludeItems == true;

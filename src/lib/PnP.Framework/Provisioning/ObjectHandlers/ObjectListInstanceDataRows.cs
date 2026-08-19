@@ -286,9 +286,11 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     var matchingExtractionConfigs = creationInfo.ExtractConfiguration?.Lists?.Lists?
                         .Where(e => e.Title != null &&
                             (e.Title.Equals(siteList.Title, StringComparison.InvariantCultureIgnoreCase) ||
-                             siteList.RootFolder.ServerRelativeUrl.EndsWith($"/{e.Title.TrimStart('/')}", StringComparison.InvariantCultureIgnoreCase)))
+                             siteList.RootFolder.ServerRelativeUrl.EndsWith($"/{e.Title.TrimStart('/')}", StringComparison.InvariantCultureIgnoreCase) ||
+                             (Guid.TryParse(e.Title, out Guid listId) && listId == siteList.Id)))
                         .ToList();
-                    var extractionConfig = matchingExtractionConfigs?.FirstOrDefault(e => e.Title.Equals(siteList.Title, StringComparison.InvariantCultureIgnoreCase))
+                    var extractionConfig = matchingExtractionConfigs?.FirstOrDefault(e => Guid.TryParse(e.Title, out Guid listId) && listId == siteList.Id)
+                        ?? matchingExtractionConfigs?.FirstOrDefault(e => e.Title.Equals(siteList.Title, StringComparison.InvariantCultureIgnoreCase))
                         ?? matchingExtractionConfigs?.FirstOrDefault();
                     CamlQuery camlQuery = CamlQuery.CreateAllItemsQuery();
                     Model.Configuration.Lists.Lists.ExtractListsQueryConfiguration queryConfig = null;
