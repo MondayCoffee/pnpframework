@@ -243,7 +243,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     }
                 })
                 && !creationInfo.ExtractConfiguration.Lists.Lists.Any(i => i.Title.Equals(siteList.Title) && i.IncludeItems)
-                && !creationInfo.ExtractConfiguration.Lists.Lists.Any(i => siteList.RootFolder.ServerRelativeUrl.EndsWith(i.Title, StringComparison.InvariantCultureIgnoreCase) && i.IncludeItems))
+                && !creationInfo.ExtractConfiguration.Lists.Lists.Any(i => siteList.RootFolder.ServerRelativeUrl.EndsWith($"/{i.Title.TrimStart('/')}", StringComparison.InvariantCultureIgnoreCase) && i.IncludeItems))
             {
                 return true;
             }
@@ -292,7 +292,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         ?? matchingExtractionConfigs?.FirstOrDefault();
                     CamlQuery camlQuery = CamlQuery.CreateAllItemsQuery();
                     Model.Configuration.Lists.Lists.ExtractListsQueryConfiguration queryConfig = null;
-                    if (extractionConfig.Query != null)
+                    if (extractionConfig?.Query != null)
                     {
                         queryConfig = extractionConfig.Query;
 
@@ -898,7 +898,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             ListItemCollection items,
             PnPMonitoredScope scope)
         {
-            if (!string.IsNullOrEmpty(extractionConfig.KeyColumn))
+            if (!string.IsNullOrEmpty(extractionConfig?.KeyColumn))
             {
                 listInstance.DataRows.KeyColumn = extractionConfig.KeyColumn;
                 listInstance.DataRows.UpdateBehavior = extractionConfig.UpdateBehavior;
@@ -932,11 +932,11 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             foreach (var fieldValue in filteredFieldValues)
             {
                 var value = item.FieldValuesAsText[fieldValue.Key];//FieldValuesAsText strips of html and returns empty string in case all info is in attributes like for canvascontrol in HostedAppsConfig
-                var skip = extractionConfig.SkipEmptyFields && item[fieldValue.Key]==null;
+                var skip = extractionConfig?.SkipEmptyFields == true && item[fieldValue.Key] == null;
                 if (!skip)
                 {
                     string parsedValue = TokenizeValue(web, siteList.Fields.FirstOrDefault(f => f.InternalName == fieldValue.Key).TypeAsString, fieldValue, value);
-                    if(!(extractionConfig.SkipEmptyFields && string.IsNullOrEmpty(parsedValue)))
+                    if(!(extractionConfig?.SkipEmptyFields == true && string.IsNullOrEmpty(parsedValue)))
                         dataRow.Values.Add(fieldValue.Key, parsedValue);
                 }
             }
